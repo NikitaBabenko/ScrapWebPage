@@ -4,6 +4,7 @@ using AngleSharp.Html.Parser;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.SqlServer.Server;
 using Services.Dto;
+using Services.Enums;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -41,11 +42,11 @@ namespace Services
 
                 var rows = dataTable.ChildNodes.Select(c => c as IHtmlTableRowElement).Where(c => c != null).ToList();
 
-                foreach ( var row in rows )
+                foreach (var row in rows)
                 {
                     var fields = row.Children.ToList();
                     var price = MapToPrice(fields, sourceType);
-                    if(price != null)
+                    if (price != null)
                     {
                         retVal.Add(price);
                     }
@@ -71,7 +72,7 @@ namespace Services
             }
 
 
-            if(date.HasValue)
+            if (date.HasValue)
             {
                 url += $"&selectedDate={date.Value.ToString("dd.MM.yyyy")}";
                 //https://mfd.ru/marketdata/?id=5&mode=1&selectedDate=03.01.2023
@@ -108,11 +109,11 @@ namespace Services
                     "D",   //string TimeFrame - D,
                     DateTime.ParseExact(fields[1].InnerHtml, dateFormats, CultureInfo.InvariantCulture).Date,   //DateTime Date - 1 format, 13.01.2023 18:45:05
                     0,//int ? Time - "0",
-                    GetDouble(fields[6].InnerHtml),//double ? Open - 6,
-                    GetDouble(fields[8].InnerHtml),//double ? High - 8,
-                    GetDouble(fields[7].InnerHtml),//double ? Low - 7,
-                    GetDouble(fields[2].InnerHtml),//double ? Close - 2,
-                    GetDouble(fields[10].InnerHtml),//double ? Volume - 10,
+                    Utils.GetDouble(fields[6].InnerHtml),//double ? Open - 6,
+                    Utils.GetDouble(fields[8].InnerHtml),//double ? High - 8,
+                    Utils.GetDouble(fields[7].InnerHtml),//double ? Low - 7,
+                    Utils.GetDouble(fields[2].InnerHtml),//double ? Close - 2,
+                    Utils.GetDouble(fields[10].InnerHtml),//double ? Volume - 10,
                     0//int ? OpenInterest - "0"
                 );
         }
@@ -129,21 +130,13 @@ namespace Services
                     "D",   //string TimeFrame - D,
                     DateTime.ParseExact(fields[1].InnerHtml, dateFormats, CultureInfo.InvariantCulture).Date,   //DateTime Date - 1 format, 13.01.2023 18:45:05
                     0,//int ? Time - "0",
-                    GetDouble(fields[6].InnerHtml),//double ? Open - 6,
-                    GetDouble(fields[8].InnerHtml),//double ? High - 8,
-                    GetDouble(fields[7].InnerHtml),//double ? Low - 7,
-                    GetDouble(fields[2].InnerHtml),//double ? Close - 2,
-                    GetDouble(fields[10].InnerHtml),//double ? Volume - 10,
+                    Utils.GetDouble(fields[6].InnerHtml),//double ? Open - 6,
+                    Utils.GetDouble(fields[8].InnerHtml),//double ? High - 8,
+                    Utils.GetDouble(fields[7].InnerHtml),//double ? Low - 7,
+                    Utils.GetDouble(fields[2].InnerHtml),//double ? Close - 2,
+                    Utils.GetDouble(fields[10].InnerHtml),//double ? Volume - 10,
                     0//int ? OpenInterest - "0"
                 );
         }
-
-        private static double GetDouble(string source)
-        {
-            string toParse = string.Concat(source).Replace(" ", string.Empty);
-            double.TryParse(toParse, CultureInfo.InvariantCulture, out double retVal);
-            return retVal;
-        }
-
     }
 }

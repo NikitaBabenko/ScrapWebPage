@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Services.Dto;
+using Services.Enums;
 using System.Runtime.InteropServices;
 
 namespace Services
@@ -26,7 +27,7 @@ namespace Services
         //    }
         //}
 
-        public async Task SaveOrUpdatePrices(IEnumerable<Price> prices)
+        public async Task SavePrices(IEnumerable<Price> prices, ConflictResolveType conflictResolveType = ConflictResolveType.Update)
         {
             using (DAL.AppContext db = new(connectionString))
             {
@@ -36,18 +37,34 @@ namespace Services
                 //var condDate = modifiedPrices.Select(mp => mp.Date).ToList();
                 //var dbPrices = await db.Prices.Where(p => modifiedPrices.Any(mp => mp.Ticker == p.Ticker && mp.TimeFrame == p.TimeFrame && mp.Date.Ticks == p.Date.Ticks)).ToListAsync();
                 //var dbPrices = await db.Prices.Where(p => condTicker.Any(c => c == p.Ticker) && condTimeFrame.Any(c => c == p.TimeFrame) && condDate.Any(c => c == p.Date)).ToListAsync();
+                var dates = modifiedPrices.Select(m => m.Date).Distinct().ToList();
+                var dbPrices = await db.Prices.Where(p => dates.Contains(p.Date)).ToListAsync();
+
                 foreach (var modified in modifiedPrices)
                 {
-                    var existingPrice = await db.Prices.FindAsync(modified.Ticker, modified.TimeFrame, modified.Date);
-                    if(existingPrice == null)
+                    var existingPrice = dbPrices.Find(p => p.Ticker == modified.Ticker && p.TimeFrame == modified.TimeFrame && p.Date == modified.Date);
+                    if (existingPrice == null)
                     {
                         db.Prices.Add(modified);
                     }
                     else
                     {
-                        UpdateProperties(existingPrice, modified);
+                        switch (conflictResolveType)
+                        {
+                            case ConflictResolveType.Stop:
+                                throw new Exception("Существует дубликат записи");
+                                break;
+                            case ConflictResolveType.Ignore:
+                                break;
+                            case ConflictResolveType.Update:
+                                UpdateProperties(existingPrice, modified);
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
+
                 await db.SaveChangesAsync();
             }
         }

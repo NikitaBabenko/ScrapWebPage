@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Win32;
 using Services;
 using Services.Dto;
 using System;
@@ -17,6 +18,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+//using Microsoft.WindowsAPICodePack.Dialogs;
+using System.Windows.Forms;
+using Services.Enums;
 
 namespace ScrapWebPage
 {
@@ -25,8 +29,13 @@ namespace ScrapWebPage
     /// </summary>
     public partial class MainWindow : Window
     {
+        const string correctTimeFrame = "D";
+
         private readonly ParseWebsiteService parseWebsiteService;
         private readonly DbService dbService;
+        private readonly FileService fileService;
+
+        private readonly List<string> files = new();
 
         public MainWindow()
         {
@@ -39,11 +48,15 @@ namespace ScrapWebPage
 
             parseWebsiteService = new ParseWebsiteService();
             dbService = new DbService(connectionString);
+            fileService = new FileService();
 
             InitializeComponent();
 
             SourceComboBox.ItemsSource = new List<string> { "Голубые фишки", "МосБиржа Акции и ПИФы" };
             SourceComboBox.SelectedIndex = 0;
+
+            ConflictComboBox.ItemsSource = new List<string> { "Останавливать при дублировании", "Игнорировать при дублировании", "Обновлять при дублировании" };
+            ConflictComboBox.SelectedIndex = 0;
         }
 
         private async void LoadButton_Click(object sender, RoutedEventArgs e)
@@ -115,7 +128,7 @@ StackTrace:
 ";
             try
             {
-                await dbService.SaveOrUpdatePrices(prices);
+                await dbService.SavePrices(prices);
             }
             catch (Exception ex)
             {
@@ -131,6 +144,127 @@ StackTrace:
                 return;
             }
             textBlock.Text += $"Выгрузка успешно завершена.\n";
+        }
+
+
+        
+
+
+        private void LoadFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new() 
+            { 
+                Multiselect= true,
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                var added = openFileDialog.FileNames;
+                files.AddRange(added);
+                textBlock.Text += "\nДобавлены файлы:\n";
+                textBlock.Text += string.Join("; ", added);
+            }
+        }
+
+        private void LoadFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            using (var fbd = new FolderBrowserDialog())
+            {
+                DialogResult result = fbd.ShowDialog();
+
+                if (!string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                {
+                    var added = fileService.GetFiles(fbd.SelectedPath);
+                    files.AddRange(added);
+                    textBlock.Text += "\nДобавлены файлы:\n";
+                    textBlock.Text += string.Join("; ", added);
+                }
+            }
+        }
+
+        private void ClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            files.Clear();
+        }
+
+        void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (e.Source is System.Windows.Controls.TabControl)
+            {
+                textBlock.Text = string.Empty;
+            }
+        }
+
+        const int chunk = 10000;
+
+        private async void StartLoadFilesButton_Click(object sender, RoutedEventArgs e)
+        {
+            textBlock.Text += "\nНачало выгрузки\n";
+
+            foreach (var file in files)
+            {
+
+
+                try
+                {
+                    await LoadFile(file);
+                }
+                catch (Exception ex)
+                {
+                    textBlock.Text += $@"Ошибка!
+{ex.Message}
+Inner exception
+{ex.InnerException?.Message}
+{ex.InnerException?.InnerException?.Message}
+{ex.InnerException?.InnerException?.InnerException?.Message}
+
+StackTrace:
+{ex.StackTrace}";
+
+
+
+                    if (System.Windows.MessageBox.Show($"При загрузке файла {file} произошла ошибка\n{ex.Message}\nПродолжить загрузку других файлов?", "Ошибка", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.No)
+                    {
+                        return;
+                    }
+                }
+
+
+            }
+            files.Clear();
+        }
+
+        private async Task LoadFile(string filePath)
+        {
+            textBlock.Text += '\n';
+            textBlock.Text += $"\nВыгрузка файла {filePath}\n";
+            var fileLength = fileService.GetFileLength(filePath);
+            long linesLeft = fileLength - 1;
+            textBlock.Text += $"\nЗаписей в фале: {fileLength}\n";
+            int count = 0;
+            long totalCount = 0;
+            List<Price> pricies = new List<Price>();
+            foreach (var price in fileService.GetPrices(filePath))
+            {
+                pricies.Add(price);
+
+                count++;
+                if (count >= chunk || count >= linesLeft)
+                {
+                    totalCount += count;
+                    linesLeft -= count;
+                    await dbService.SavePrices(pricies.Where(p => p != null && p.TimeFrame == correctTimeFrame), (ConflictResolveType)ConflictComboBox.SelectedIndex);
+                    var percent = (double)totalCount / (double)(fileLength-1) * 100;
+                    textBlock.Text += $"\nЗагружено {string.Format("{0:0.##}", percent)}%\n";
+                    count = 0;
+                }
+            }
+
+            textBlock.Text += $"\nФайл успешно загружен\n";
+        }
+
+        private void CleanTextButton_Click(object sender, RoutedEventArgs e)
+        {
+            textBlock.Text = string.Empty;
         }
     }
 }
