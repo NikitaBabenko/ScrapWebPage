@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ScrapWebPage"
         mc:Ignorable="d"
-        Title="" Height="550" Width="800">
+        Title="" Height="550" Width="775">
     <Grid Margin="0,0,0,0">
 
 
@@ -20,23 +20,40 @@
             <TabItem Header="Web">
                 <!--<Grid Background="#FFE5E5E5" Margin="0,0,0,0">-->
                 <Grid Margin="0,0,0,0">
-                    <Calendar x:Name="FromCalendar" Margin="0,30,33,0" HorizontalAlignment="Right" Width="179" Height="168" VerticalAlignment="Top"/>
-                    <ComboBox x:Name="SourceComboBox" Margin="0,415,33,0" HorizontalAlignment="Right" Width="179" Height="22" VerticalAlignment="Top"/>
-                    <Label x:Name="SourceLabel" Content="Источник" Margin="0,389,33,0" HorizontalAlignment="Right" Width="179" Height="26" VerticalAlignment="Top"/>
-                    <Calendar x:Name="ToCalendar" Margin="0,221,33,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="179"/>
-                    <Label x:Name="FromLabel" Content="От даты:" Margin="0,4,33,0" HorizontalAlignment="Right" Width="179" Height="26" VerticalAlignment="Top"/>
-                    <Label x:Name="ToCheckBox" Content="До даты:" Margin="0,198,33,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="179"/>
-                    <Button x:Name="LoadButton" Content="Выгрузить в БД" HorizontalAlignment="Right" Margin="0,0,33,10" Width="179" Click="LoadButton_Click" Height="29" VerticalAlignment="Bottom"/>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="25*"/>
+                        <ColumnDefinition Width="97*"/>
+                    </Grid.ColumnDefinitions>
+                    <Calendar x:Name="FromCalendar" Margin="0,30,33,0" HorizontalAlignment="Right" Width="179" Height="168" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+                    <ComboBox x:Name="SourceComboBox" Margin="0,415,33,0" HorizontalAlignment="Right" Width="179" Height="22" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+                    <Label x:Name="SourceLabel" Content="Источник" Margin="0,389,33,0" HorizontalAlignment="Right" Width="179" Height="26" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+                    <Calendar x:Name="ToCalendar" Margin="0,221,33,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="179" Grid.ColumnSpan="2"/>
+                    <Label x:Name="FromLabel" Content="От даты:" Margin="0,4,33,0" HorizontalAlignment="Right" Width="179" Height="26" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+                    <Label x:Name="ToCheckBox" Content="До даты:" Margin="0,198,33,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="179" Grid.ColumnSpan="2"/>
+                    <Button x:Name="LoadButton" Content="Выгрузить в БД" HorizontalAlignment="Right" Margin="0,0,33,10" Width="179" Click="LoadButton_Click" Height="29" VerticalAlignment="Bottom" Grid.ColumnSpan="2"/>
                 </Grid>
 
             </TabItem>
             <TabItem Header="File" Height="22">
                 <Grid>
                     <Button x:Name="LoadFileButton" Content="Выбрать файл(ы)" HorizontalAlignment="Center" Margin="0,24,0,0" Width="224" Height="37" VerticalAlignment="Top" Click="LoadFileButton_Click"/>
-                    <Button x:Name="LoadFolderButton" Content="Выбрать файлы из папки" HorizontalAlignment="Center" Margin="0,66,0,0" Width="224" Height="37" VerticalAlignment="Top" Click="LoadFolderButton_Click"/>
+                    <Button x:Name="LoadFolderButton" Content="Выбрать папку" HorizontalAlignment="Center" Margin="0,66,0,0" Width="224" Height="37" VerticalAlignment="Top" Click="LoadFolderButton_Click"/>
                     <Button x:Name="ClearButton" Content="Очистить список файлов" HorizontalAlignment="Center" Margin="0,130,0,0" Width="224" Height="37" VerticalAlignment="Top" Click="ClearButton_Click"/>
                     <Button x:Name="StartLoadFilesButton" Content="Начать загрузку" HorizontalAlignment="Center" Margin="0,0,0,17" Width="224" Height="37" VerticalAlignment="Bottom" Click="StartLoadFilesButton_Click"/>
-                    <ComboBox x:Name="ConflictComboBox" HorizontalAlignment="Center" Margin="0,190,0,0" VerticalAlignment="Top" Width="224" Height="37"/>
+                    <ComboBox x:Name="ConflictComboBox" HorizontalAlignment="Center" Margin="0,190,0,0" VerticalAlignment="Top" Width="224" Height="22"/>
+                    <CheckBox x:Name="YearFilterCheckBox" Content="фильтровать с года" HorizontalAlignment="Left" Margin="10,217,0,0" VerticalAlignment="Top" Height="18" Width="135"/>
+                    <TextBox x:Name="YearFilterTextBox" HorizontalAlignment="Left" VerticalAlignment="Top" Width="84" Height="18" Margin="150,217,0,0" 
+                                PreviewTextInput="MaskNumericInput" 
+                                DataObject.Pasting="MaskNumericPaste">
+                        <TextBox.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleX="1"/>
+                                <SkewTransform/>
+                                <RotateTransform/>
+                                <TranslateTransform/>
+                            </TransformGroup>
+                        </TextBox.RenderTransform>
+                    </TextBox>
                 </Grid>
             </TabItem>
         </TabControl>

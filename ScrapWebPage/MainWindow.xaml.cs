@@ -57,6 +57,8 @@ namespace ScrapWebPage
 
             ConflictComboBox.ItemsSource = new List<string> { "Останавливать при дублировании", "Игнорировать при дублировании", "Обновлять при дублировании" };
             ConflictComboBox.SelectedIndex = 0;
+
+            YearFilterTextBox.Text = DateTime.Now.Year.ToString();
         }
 
         private async void LoadButton_Click(object sender, RoutedEventArgs e)
@@ -200,6 +202,12 @@ StackTrace:
         {
             textBlock.Text += "\nНачало выгрузки\n";
 
+            if(!files.Any())
+            {
+                textBlock.Text += "\nНужно выбрать файлы!\n";
+                return;
+            }
+
             foreach (var file in files)
             {
 
@@ -236,11 +244,12 @@ StackTrace:
         private async Task LoadFile(string filePath)
         {
             textBlock.Text += '\n';
-            textBlock.Text += $"\nВыгрузка файла {filePath}\n";
+            textBlock.Text += $"Выгрузка файла {filePath}\n";
             var fileLength = fileService.GetFileLength(filePath);
             long linesLeft = fileLength - 1;
-            textBlock.Text += $"\nЗаписей в фале: {fileLength}\n";
+            textBlock.Text += $"Записей в фале: {fileLength - 1}\n";
             int count = 0;
+            int dbCount = 0;
             long totalCount = 0;
             List<Price> pricies = new List<Price>();
             foreach (var price in fileService.GetPrices(filePath))
@@ -252,19 +261,53 @@ StackTrace:
                 {
                     totalCount += count;
                     linesLeft -= count;
-                    await dbService.SavePrices(pricies.Where(p => p != null && p.TimeFrame == correctTimeFrame), (ConflictResolveType)ConflictComboBox.SelectedIndex);
+
+                    var pricesToSave = pricies
+                        .Where(p => p != null && p.TimeFrame == correctTimeFrame)
+                        .Where(p => !YearFilterCheckBox.IsChecked.HasValue || !YearFilterCheckBox.IsChecked.Value || int.Parse(YearFilterTextBox.Text) <= p.Date.Year)
+                        .Distinct();
+                    
+                    dbCount += pricesToSave.Count();
+
+                    await dbService.SavePrices(pricesToSave, (ConflictResolveType)ConflictComboBox.SelectedIndex);
                     var percent = (double)totalCount / (double)(fileLength-1) * 100;
-                    textBlock.Text += $"\nЗагружено {string.Format("{0:0.##}", percent)}%\n";
+                    textBlock.Text += $"Загружено {string.Format("{0:0.##}", percent)}%\n";
                     count = 0;
+                    pricies.Clear();
                 }
             }
 
-            textBlock.Text += $"\nФайл успешно загружен\n";
+            textBlock.Text += $"Записей сохранено в БД {dbCount}\nФайл успешно загружен\n";
         }
 
         private void CleanTextButton_Click(object sender, RoutedEventArgs e)
         {
             textBlock.Text = string.Empty;
+        }
+
+
+
+        private void MaskNumericInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !TextIsNum(e.Text);
+        }
+
+        private void MaskNumericPaste(object sender, DataObjectPastingEventArgs e)
+        {
+            if (e.DataObject.GetDataPresent(typeof(string)))
+            {
+                string input = (string)e.DataObject.GetData(typeof(string));
+                if (!TextIsNum(input) ) e.CancelCommand();
+            }
+            else
+            {
+                e.CancelCommand();
+            }
+        }
+
+        private bool TextIsNum(string input)
+        {
+            return input.All(c => Char.IsDigit(c) || Char.IsControl(c));
         }
     }
 }

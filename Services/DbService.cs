@@ -31,6 +31,8 @@ namespace Services
         {
             using (DAL.AppContext db = new(connectionString))
             {
+                db.Database.SetCommandTimeout(10 * 60);
+
                 var modifiedPrices = prices.Select(MapToDb).ToList();
                 //var condTicker = modifiedPrices.Select(mp => mp.Ticker).ToList();
                 //var condTimeFrame = modifiedPrices.Select(mp => mp.TimeFrame).ToList();
@@ -52,7 +54,7 @@ namespace Services
                         switch (conflictResolveType)
                         {
                             case ConflictResolveType.Stop:
-                                throw new Exception("Существует дубликат записи");
+                                throw new Exception($"Существует дубликат записи Ticker = {modified.Ticker} TimeFrame = {modified.TimeFrame} Date = {modified.Date}");
                                 break;
                             case ConflictResolveType.Ignore:
                                 break;
