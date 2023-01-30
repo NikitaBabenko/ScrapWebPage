@@ -34,6 +34,8 @@ namespace ScrapWebPage
         private readonly ParseWebsiteService parseWebsiteService;
         private readonly DbService dbService;
         private readonly FileService fileService;
+        private readonly ExcelService excelService;
+        private readonly CalcService calcService;
 
         private readonly List<string> files = new();
 
@@ -49,6 +51,8 @@ namespace ScrapWebPage
             parseWebsiteService = new ParseWebsiteService();
             dbService = new DbService(connectionString);
             fileService = new FileService();
+            excelService = new ExcelService();
+            calcService = new CalcService();
 
             InitializeComponent();
 
@@ -60,6 +64,8 @@ namespace ScrapWebPage
 
             YearFilterTextBox.Text = DateTime.Now.Year.ToString();
         }
+
+        #region web
 
         private async void LoadButton_Click(object sender, RoutedEventArgs e)
         {
@@ -148,9 +154,11 @@ StackTrace:
             textBlock.Text += $"Выгрузка успешно завершена.\n";
         }
 
+        #endregion
 
-        
 
+
+        #region file
 
         private void LoadFileButton_Click(object sender, RoutedEventArgs e)
         {
@@ -308,6 +316,67 @@ StackTrace:
         private bool TextIsNum(string input)
         {
             return input.All(c => Char.IsDigit(c) || Char.IsControl(c));
+        }
+
+        #endregion
+
+
+
+
+        #region excel
+
+        readonly List<string> excelFiles = new List<string>();
+
+        private void LoadExcelFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new()
+            {
+                Multiselect = true,
+            };
+            if (openFileDialog.ShowDialog() == true)
+            {
+                var added = openFileDialog.FileNames;
+                excelFiles.AddRange(added);
+                textBlock.Text += "\nДобавлены файлы:\n";
+                textBlock.Text += string.Join(";\n", added);
+            }
+        }
+
+        #endregion
+
+        private void HandleExcelButton_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var excelFile in excelFiles)
+            {
+                try
+                {
+                    textBlock.Text += $"\nОбработка файла: {excelFile}\n";
+                    var rows = excelService.LoadExcel(excelFile);
+                    textBlock.Text += $"Загружено строк: {rows.Count}\n";
+
+                    calcService.CalcExcelRows(rows, int.Parse(ExcelCountTextBox.Text));
+
+                    textBlock.Text += $"Сохранение..\n";
+                    excelService.SaveProfitDrawdown(excelFile, rows);
+                    textBlock.Text += $"Успешно завершено!\n\n";
+                }
+                catch (Exception ex)
+                {
+                    textBlock.Text += $@"Ошибка!
+{ex.Message}
+Inner exception
+{ex.InnerException?.Message}
+{ex.InnerException?.InnerException?.Message}
+{ex.InnerException?.InnerException?.InnerException?.Message}
+
+StackTrace:
+{ex.StackTrace}";
+                }
+            }
+
+
+
+            
         }
     }
 }

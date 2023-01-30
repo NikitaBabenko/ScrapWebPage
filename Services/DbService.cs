@@ -40,11 +40,11 @@ namespace Services
                 //var dbPrices = await db.Prices.Where(p => modifiedPrices.Any(mp => mp.Ticker == p.Ticker && mp.TimeFrame == p.TimeFrame && mp.Date.Ticks == p.Date.Ticks)).ToListAsync();
                 //var dbPrices = await db.Prices.Where(p => condTicker.Any(c => c == p.Ticker) && condTimeFrame.Any(c => c == p.TimeFrame) && condDate.Any(c => c == p.Date)).ToListAsync();
                 var dates = modifiedPrices.Select(m => m.Date).Distinct().ToList();
-                var dbPrices = await db.Prices.Where(p => dates.Contains(p.Date)).ToListAsync();
+                var dbPrices = dates.Count > 10 ? db.Prices : db.Prices.Where(p => dates.Contains(p.Date));
 
                 foreach (var modified in modifiedPrices)
                 {
-                    var existingPrice = dbPrices.Find(p => p.Ticker == modified.Ticker && p.TimeFrame == modified.TimeFrame && p.Date == modified.Date);
+                    var existingPrice = await dbPrices.FirstOrDefaultAsync(p => p.Ticker == modified.Ticker && p.TimeFrame == modified.TimeFrame && p.Date == modified.Date);
                     if (existingPrice == null)
                     {
                         db.Prices.Add(modified);
@@ -55,7 +55,6 @@ namespace Services
                         {
                             case ConflictResolveType.Stop:
                                 throw new Exception($"Существует дубликат записи Ticker = {modified.Ticker} TimeFrame = {modified.TimeFrame} Date = {modified.Date}");
-                                break;
                             case ConflictResolveType.Ignore:
                                 break;
                             case ConflictResolveType.Update:
