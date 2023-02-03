@@ -13,6 +13,8 @@ namespace DAL
     {
         public DbSet<Price> Prices { get; set; }
 
+        public DbSet<BacktestResults> BacktestResults { get; set; }
+
         private readonly string connectionString;
 
         public AppContext(string connectionString)
@@ -29,6 +31,9 @@ namespace DAL
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Price>()
+                .HasKey(p => new { p.Ticker, p.TimeFrame, p.Date });
+
+            modelBuilder.Entity<BacktestResults>()
                 .HasKey(p => new { p.Ticker, p.TimeFrame, p.Date });
         }
     }

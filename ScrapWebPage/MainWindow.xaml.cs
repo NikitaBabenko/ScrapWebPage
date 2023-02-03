@@ -34,7 +34,7 @@ namespace ScrapWebPage
         private readonly ParseWebsiteService parseWebsiteService;
         private readonly DbService dbService;
         private readonly FileService fileService;
-        private readonly ExcelService excelService;
+        //private readonly ExcelService excelService;
         private readonly CalcService calcService;
 
         private readonly List<string> files = new();
@@ -51,7 +51,7 @@ namespace ScrapWebPage
             parseWebsiteService = new ParseWebsiteService();
             dbService = new DbService(connectionString);
             fileService = new FileService();
-            excelService = new ExcelService();
+            //excelService = new ExcelService();
             calcService = new CalcService();
 
             InitializeComponent();
@@ -74,7 +74,7 @@ namespace ScrapWebPage
             DateTime? toDate = !ToCalendar.SelectedDate.HasValue || ToCalendar.SelectedDate.Value.Date == DateTime.Today ? null : ToCalendar.SelectedDate;
 
             textBlock.Text = "Начало выгрузки.\n";
-            if(toDate.HasValue)
+            if (toDate.HasValue)
             {
                 fromDate ??= DateTime.Now;
                 //if (fromDate.Value.Date == toDate.Value.Date)
@@ -82,7 +82,7 @@ namespace ScrapWebPage
                 //    Load(sourceType, fromDate);
                 //}
                 //else
-                if(fromDate.Value.Date > toDate.Value.Date)
+                if (fromDate.Value.Date > toDate.Value.Date)
                 {
                     textBlock.Text += "Дата начала должна быть меньше даты окончания периода.";
                 }
@@ -162,9 +162,9 @@ StackTrace:
 
         private void LoadFileButton_Click(object sender, RoutedEventArgs e)
         {
-            Microsoft.Win32.OpenFileDialog openFileDialog = new() 
-            { 
-                Multiselect= true,
+            Microsoft.Win32.OpenFileDialog openFileDialog = new()
+            {
+                Multiselect = true,
             };
             if (openFileDialog.ShowDialog() == true)
             {
@@ -210,7 +210,7 @@ StackTrace:
         {
             textBlock.Text += "\nНачало выгрузки\n";
 
-            if(!files.Any())
+            if (!files.Any())
             {
                 textBlock.Text += "\nНужно выбрать файлы!\n";
                 return;
@@ -274,11 +274,11 @@ StackTrace:
                         .Where(p => p != null && p.TimeFrame == correctTimeFrame)
                         .Where(p => !YearFilterCheckBox.IsChecked.HasValue || !YearFilterCheckBox.IsChecked.Value || int.Parse(YearFilterTextBox.Text) <= p.Date.Year)
                         .Distinct();
-                    
+
                     dbCount += pricesToSave.Count();
 
                     await dbService.SavePrices(pricesToSave, (ConflictResolveType)ConflictComboBox.SelectedIndex);
-                    var percent = (double)totalCount / (double)(fileLength-1) * 100;
+                    var percent = (double)totalCount / (double)(fileLength - 1) * 100;
                     textBlock.Text += $"Загружено {string.Format("{0:0.##}", percent)}%\n";
                     count = 0;
                     pricies.Clear();
@@ -305,7 +305,7 @@ StackTrace:
             if (e.DataObject.GetDataPresent(typeof(string)))
             {
                 string input = (string)e.DataObject.GetData(typeof(string));
-                if (!TextIsNum(input) ) e.CancelCommand();
+                if (!TextIsNum(input)) e.CancelCommand();
             }
             else
             {
@@ -323,46 +323,81 @@ StackTrace:
 
 
 
-        #region excel
+        //        #region excel
 
-        readonly List<string> excelFiles = new List<string>();
+        //        readonly List<string> excelFiles = new List<string>();
 
-        private void LoadExcelFileButton_Click(object sender, RoutedEventArgs e)
+        //        private void LoadExcelFileButton_Click(object sender, RoutedEventArgs e)
+        //        {
+        //            Microsoft.Win32.OpenFileDialog openFileDialog = new()
+        //            {
+        //                Multiselect = true,
+        //            };
+        //            if (openFileDialog.ShowDialog() == true)
+        //            {
+        //                var added = openFileDialog.FileNames;
+        //                excelFiles.AddRange(added);
+        //                textBlock.Text += "\nДобавлены файлы:\n";
+        //                textBlock.Text += string.Join(";\n", added);
+        //            }
+        //        }
+
+        //        private void HandleExcelButton_Click(object sender, RoutedEventArgs e)
+        //        {
+        //            foreach (var excelFile in excelFiles)
+        //            {
+        //                try
+        //                {
+        //                    textBlock.Text += $"\nОбработка файла: {excelFile}\n";
+        //                    var rows = excelService.LoadExcel(excelFile);
+        //                    textBlock.Text += $"Загружено строк: {rows.Count}\n";
+
+        //                    calcService.CalcExcelRows(rows, int.Parse(ExcelCountTextBox.Text));
+
+        //                    textBlock.Text += $"Сохранение..\n";
+        //                    excelService.SaveProfitDrawdown(excelFile, rows);
+        //                    textBlock.Text += $"Успешно завершено!\n\n";
+        //                }
+        //                catch (Exception ex)
+        //                {
+        //                    textBlock.Text += $@"Ошибка!
+        //{ex.Message}
+        //Inner exception
+        //{ex.InnerException?.Message}
+        //{ex.InnerException?.InnerException?.Message}
+        //{ex.InnerException?.InnerException?.InnerException?.Message}
+
+        //StackTrace:
+        //{ex.StackTrace}";
+        //                }
+        //            }
+        //        }
+        //        #endregion
+
+
+
+
+        #region Calc
+
+        private async void CalcButton_Click(object sender, RoutedEventArgs e)
         {
-            Microsoft.Win32.OpenFileDialog openFileDialog = new()
+            try
             {
-                Multiselect = true,
-            };
-            if (openFileDialog.ShowDialog() == true)
-            {
-                var added = openFileDialog.FileNames;
-                excelFiles.AddRange(added);
-                textBlock.Text += "\nДобавлены файлы:\n";
-                textBlock.Text += string.Join(";\n", added);
+                DateTime fromDate = !CalcFromCalendar.SelectedDate.HasValue ? DateTime.Today : CalcFromCalendar.SelectedDate.Value;
+                DateTime toDate = !CalcToCalendar.SelectedDate.HasValue ? DateTime.Today : CalcToCalendar.SelectedDate.Value;
+
+                textBlock.Text += $"\nОбработка...\n";
+                var rows = await dbService.GetPrices(fromDate, toDate);
+
+                calcService.CalcRows(rows, int.Parse(CalcCountTextBox.Text));
+
+                textBlock.Text += $"Сохранение..\n";
+                await dbService.UpdateProfitAndDrawdown(rows);
+                textBlock.Text += $"Успешно завершено!\n\n";
             }
-        }
-
-        #endregion
-
-        private void HandleExcelButton_Click(object sender, RoutedEventArgs e)
-        {
-            foreach (var excelFile in excelFiles)
+            catch (Exception ex)
             {
-                try
-                {
-                    textBlock.Text += $"\nОбработка файла: {excelFile}\n";
-                    var rows = excelService.LoadExcel(excelFile);
-                    textBlock.Text += $"Загружено строк: {rows.Count}\n";
-
-                    calcService.CalcExcelRows(rows, int.Parse(ExcelCountTextBox.Text));
-
-                    textBlock.Text += $"Сохранение..\n";
-                    excelService.SaveProfitDrawdown(excelFile, rows);
-                    textBlock.Text += $"Успешно завершено!\n\n";
-                }
-                catch (Exception ex)
-                {
-                    textBlock.Text += $@"Ошибка!
+                textBlock.Text += $@"Ошибка!
 {ex.Message}
 Inner exception
 {ex.InnerException?.Message}
@@ -371,12 +406,10 @@ Inner exception
 
 StackTrace:
 {ex.StackTrace}";
-                }
             }
-
-
-
-            
         }
+
+        #endregion
+
     }
 }

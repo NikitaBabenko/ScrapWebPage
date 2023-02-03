@@ -94,6 +94,7 @@ namespace Services
                 Utils.GetDouble(s[7]), //<CLOSE>
                 Utils.GetDouble(s[8]), //<VOL>
                 openInt //<OPENINT>
+                //null, null, null, null, Enums.Signal.None
                 );
             return retVal;
         }

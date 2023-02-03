@@ -56,7 +56,7 @@
                     </TextBox>
                 </Grid>
             </TabItem>
-            <TabItem Header="Excel" Height="22">
+            <!--<TabItem Header="Excel" Height="22">
                 <Grid>
                     <Button x:Name="LoadExcelFileButton" Content="Выбрать файл(ы)" HorizontalAlignment="Center" Margin="0,24,0,0" Width="224" Height="37" VerticalAlignment="Top" Click="LoadExcelFileButton_Click"/>
                     <Button x:Name="HandleExcelButton" Content="Обработать файлы" HorizontalAlignment="Center" Margin="0,0,0,10" Width="224" Click="HandleExcelButton_Click" Height="37" VerticalAlignment="Bottom"/>
@@ -65,7 +65,24 @@
                                 PreviewTextInput="MaskNumericInput" 
                                 DataObject.Pasting="MaskNumericPaste"/>
                 </Grid>
+            </TabItem>-->
+
+            <TabItem Header="Calc profits">
+                <!--<Grid Background="#FFE5E5E5" Margin="0,0,0,0">-->
+                <Grid Margin="0,0,0,0">
+                    <Calendar x:Name="CalcFromCalendar" Margin="0,30,33,0" HorizontalAlignment="Right" Width="179" Height="168" VerticalAlignment="Top"/>
+                    <Calendar x:Name="CalcToCalendar" Margin="0,221,33,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="179" />
+                    <Label x:Name="CalcFromLabel" Content="От даты:" Margin="0,4,33,0" HorizontalAlignment="Right" Width="179" Height="26" VerticalAlignment="Top"/>
+                    <Label x:Name="CalcToCheckBox" Content="До даты:" Margin="0,198,33,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="179"/>
+                    <Label x:Name="CalcCountLabel" Content="Строчек:" HorizontalAlignment="Left" Margin="32,400,0,0" VerticalAlignment="Top" Width="65"/>
+                    <TextBox x:Name="CalcCountTextBox" HorizontalAlignment="Left" Margin="91,404,0,0" TextWrapping="Wrap" Text="20" VerticalAlignment="Top" Width="120" 
+                                PreviewTextInput="MaskNumericInput" 
+                                DataObject.Pasting="MaskNumericPaste"/>
+                    <Button x:Name="CalcButton" Content="Рассчитать" HorizontalAlignment="Right" Margin="0,0,33,10" Width="179" Height="29" VerticalAlignment="Bottom" Click="CalcButton_Click"/>
+                </Grid>
+
             </TabItem>
+
         </TabControl>
 
     </Grid>

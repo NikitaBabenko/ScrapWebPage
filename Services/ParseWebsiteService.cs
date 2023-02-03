@@ -115,6 +115,7 @@ namespace Services
                     Utils.GetDouble(fields[2].InnerHtml),//double ? Close - 2,
                     Utils.GetDouble(fields[10].InnerHtml),//double ? Volume - 10,
                     0//int ? OpenInterest - "0"
+                    //null, null, null, null, Enums.Signal.None
                 );
         }
 
@@ -136,6 +137,7 @@ namespace Services
                     Utils.GetDouble(fields[2].InnerHtml),//double ? Close - 2,
                     Utils.GetDouble(fields[10].InnerHtml),//double ? Volume - 10,
                     0//int ? OpenInterest - "0"
+                    //null, null, null, null, Signal.None
                 );
         }
     }
